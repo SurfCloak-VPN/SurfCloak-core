@@ -1,4 +1,4 @@
-package generator
+package core
 
 import (
 	"fmt"
@@ -6,19 +6,32 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/SurfCloak-VPN/SurfCloak-core/config"
-	"github.com/SurfCloak-VPN/SurfCloak-core/keys"
-
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-type WGConfigGenerator struct {
-	serverConfig     config.ServerConfig
-	generationConfig config.GenerationConfig
+func GenerateKeyPair() (privateKey, publicKey string, err error) {
+	private, err := wgtypes.GeneratePrivateKey()
+	if err != nil {
+		return "", "", err
+	}
+	return private.String(), private.PublicKey().String(), nil
 }
 
-func NewGenerator(serverConfig config.ServerConfig, generationConfig config.GenerationConfig) (*WGConfigGenerator, error) {
-	err := keys.ValidateKey(serverConfig.PublicKey)
+func ValidateKey(key string) error {
+	_, err := wgtypes.ParseKey(key)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type WGConfigGenerator struct {
+	serverConfig     ServerConfig
+	generationConfig GenerationConfig
+}
+
+func NewGenerator(serverConfig ServerConfig, generationConfig GenerationConfig) (*WGConfigGenerator, error) {
+	err := ValidateKey(serverConfig.PublicKey)
 	if err != nil {
 		return nil, fmt.Errorf("ivalid server public key: %v", err)
 	}
@@ -33,11 +46,11 @@ func NewGenerator(serverConfig config.ServerConfig, generationConfig config.Gene
 	}, nil
 }
 
-func (g *WGConfigGenerator) Generate(uniqueNum int, uniqueCode string, clientConfig config.ClientConfig) (path string, err error) {
+func (g *WGConfigGenerator) Generate(uniqueNum int, uniqueCode string, clientConfig ClientConfig) (path string, err error) {
 	var publicKey string
 	privateKey := clientConfig.PrivateKey
 	if privateKey == "" {
-		privKey, pubkey, err := keys.GenerateKeyPair()
+		privKey, pubkey, err := GenerateKeyPair()
 		if err != nil {
 			return "", fmt.Errorf("key generation failed: %v", err)
 		}
@@ -89,4 +102,23 @@ func (g *WGConfigGenerator) Generate(uniqueNum int, uniqueCode string, clientCon
 	}
 
 	return wgConfigPath, nil
+}
+
+type ServerConfig struct {
+	DNS         string
+	PublicKey   string
+	PublicIP    string
+	Port        int
+	AllowedIPs  string
+	WGInterface string
+}
+
+type ClientConfig struct {
+	ClientIP            string
+	PrivateKey          string
+	PresistentKeepAlive int
+}
+
+type GenerationConfig struct {
+	Dir string
 }
