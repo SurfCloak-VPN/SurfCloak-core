@@ -1,4 +1,4 @@
-module SurfCloakCore
+module github.com/SurfCloak-VPN/SurfCloak-core
 
 go 1.24.2
 
