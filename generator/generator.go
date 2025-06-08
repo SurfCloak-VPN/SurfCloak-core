@@ -1,12 +1,13 @@
 package generator
 
 import (
-	"SurfCloakCore/config"
-	"SurfCloakCore/keys"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/SurfCloak-VPN/SurfCloak-core/config"
+	"github.com/SurfCloak-VPN/SurfCloak-core/keys"
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
